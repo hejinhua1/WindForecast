@@ -1,0 +1,231 @@
+珍珠湾:
+    id: 0
+    code_nwp: gdyjzzw
+    code_power: 58064000
+    code_wind: 57064999
+    capacity: 400
+    cut_in:
+    cut_out:
+    rated:
+下海北A:
+    id: 1
+    code_nwp: gdhsxhb
+    code_power: 58065000
+    code_wind: 57065999
+    capacity: 198
+    cut_in:
+    cut_out:
+    rated:
+下海北B:
+    id: 2
+    code_nwp: 
+    code_power: 58128000
+    code_wind: 57128999
+    capacity: 200
+    cut_in:
+    cut_out:
+    rated:
+下海北C:
+    id: 3
+    code_nwp: 
+    code_power: 58129000
+    code_wind: 57129999
+    capacity: 203.5
+    cut_in:
+    cut_out:
+    rated:
+峡沙:
+    id: 4
+    code_nwp: gdhsxs
+    code_power: 58084000
+    code_wind: 57084999
+    capacity: 400
+    cut_in:
+    cut_out:
+    rated:
+玄武A:
+    id: 5
+    code_nwp: gdjyxw
+    code_power: 58085000
+    code_wind: 57085999
+    capacity: 200 #后期拆分了，大概从202401开始
+    cut_in:
+    cut_out:
+    rated:
+融星:
+    id: 6
+    code_nwp: gdyjrx
+    code_power: 58093000
+    code_wind: 57093999
+    capacity: 300 #中间可能有段时间部分停机了，202310-202312
+    cut_in:
+    cut_out:
+    rated:
+璧青湾:
+    id: 7
+    code_nwp: gdzhbqw
+    code_power: 58094000
+    code_wind: 57094999
+    capacity: 300
+    cut_in:
+    cut_out:
+    rated:
+峡阳A:
+    id: 8
+    code_nwp: gdyjxy
+    code_power: 58100000
+    code_wind: 57100999
+    capacity: 500 #1300, 从2024年1月份进行拆分, 另一个是峡阳B
+    cut_in:
+    cut_out:
+    rated:
+尚洋湾:
+    id: 9
+    code_nwp: gdyjsyw
+    code_power: 58101000
+    code_wind: 57101999
+    capacity: 300
+    cut_in:
+    cut_out:
+    rated:
+盈和A:
+    id: 10
+    code_nwp: gdzjyh
+    code_power: 58113000
+    code_wind: 57113999
+    capacity: 300
+    cut_in:
+    cut_out:
+    rated:
+盈和B:
+    id: 11
+    code_nwp: gdzjyhb
+    code_power: 58113000
+    code_wind: 57113999
+    capacity: 300
+    cut_in:
+    cut_out:
+    rated:
+慈航A:
+    id: 12
+    code_nwp: gdjych
+    code_power: 58115000 
+    code_wind: 57115999
+    capacity: 406.5 # 322.5 #？？部分超过这个值了，应该是在400左右，406.5是根据908.5修正来的
+    cut_in:
+    cut_out:
+    rated:
+慈航B:
+    id: 13
+    code_nwp: gdjychb
+    code_power: 58126000
+    code_wind: 57126999
+    capacity: 502
+    cut_in:
+    cut_out:
+    rated:
+彩石滩A:
+    id: 14
+    code_nwp: gdhzcst
+    code_power: 58114000
+    code_wind: 57114999
+    capacity: 250
+    cut_in:
+    cut_out:
+    rated:
+蕴阳:
+    id: 15
+    code_nwp: gdyjyy
+    code_power: 58116000
+    code_wind: 57116999
+    capacity: 300
+    cut_in:
+    cut_out:
+    rated:
+勒门:
+    id: 16
+    code_nwp: gdstlm
+    code_power: 58117000
+    code_wind: 57117999
+    capacity: 245
+    cut_in:
+    cut_out:
+    rated:
+菩提:
+    id: 17
+    code_nwp: gdyjpt
+    code_power: 58121000
+    code_wind: 57121999
+    capacity: 500
+    cut_in:
+    cut_out:
+    rated:
+澎湃A:
+    id: 18
+    code_nwp: gdswpp
+    code_power: 58125000
+    code_wind: 57125999
+    capacity: 500
+    cut_in:
+    cut_out:
+    rated:
+澎湃B:
+    id: 19
+    code_nwp: gdswppb
+    code_power: 58127000
+    code_wind: 57127999
+    capacity: 400
+    cut_in:
+    cut_out:
+    rated:
+玄武B:
+    id: 20
+    code_nwp: 
+    code_power: 58134000
+    code_wind: 57134999
+    capacity: 300
+    cut_in:
+    cut_out:
+    rated:
+峡阳B:
+    id: 21
+    code_nwp: gdyjxyb
+    code_power: 58135000
+    code_wind: 57135999
+    capacity: 800 #?
+合和:
+    id: 22
+    code_nwp: gdzjhh
+    code_power: 58130000
+    code_wind: 57130999
+    capacity: 1000
+    cut_in:
+    cut_out:
+    rated:
+彩石滩B:
+    id: 23
+    code_nwp: 
+    code_power: 58131000
+    code_wind: 57131999
+    capacity: 300
+    cut_in:
+    cut_out:
+    rated:
+蕴华:
+    id: 24
+    code_nwp: gdyjyh
+    code_power: 58132000
+    code_wind: 57132999
+    capacity: 500
+    cut_in:
+    cut_out:
+    rated:
+广澳:
+    id: 25
+    code_nwp: 
+    code_power: 58133000
+    code_wind: 57133999
+    capacity: 594
+    cut_in:
+    cut_out:
+    rated:

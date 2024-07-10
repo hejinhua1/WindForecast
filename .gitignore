@@ -1,0 +1,14 @@
+# 忽略 data 文件夹
+data/
+
+# 忽略 data_process_scripts 文件夹
+data_process_scripts/
+
+# 忽略 venv 文件夹
+venv/
+.idea/
+data_raw/
+data_infer/
+train_scripts/mlruns/
+train_scripts/outputs.db
+
