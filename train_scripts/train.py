@@ -21,14 +21,30 @@ warnings.filterwarnings("ignore")
 
 with open("/home/hjh/WindForecast/train_scripts/config.yaml", "r") as f:
     config = yaml.safe_load(f)
+# 读取YAML文件
+with open("/home/hjh/WindForecast/station_config.yaml", "r") as f:
+    station_config = yaml.safe_load(f)
+
+train_station_id = 0
+
+# 提取id到场站的映射
+id_station_mapping = {}
+for station, attributes in station_config.items():
+    id_station_mapping[attributes['id']] = station
+
 pred_step = 16
-EPOCH_NUM= 50
-task_name="guangdong-wind-6"
+EPOCH_NUM = 50
+
+# 生成task_name
+station_name = id_station_mapping[train_station_id]
+task_name = f"guangdong-wind-{station_name}"
+
+print(task_name)
 
 mlflow.set_experiment(task_name)
 
-train_set = CustomDataset(mode="train")
-val_set = CustomDataset(mode="val")
+train_set = CustomDataset(mode="train", id=train_station_id)
+val_set = CustomDataset(mode="val", id=train_station_id)
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
