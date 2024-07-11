@@ -16,14 +16,15 @@ warnings.filterwarnings("ignore")
 data_storage_dir = "data_storage"
 model_name = "wind-speed-pred"
 model_version = "186"
+pred_station_id = 0
 
-scaler_nwp = load("data/scaler_nwp.joblib")
-scaler_wind = load("data/scaler_wind.joblib")
-scaler_power = load("data/scaler_power.joblib")
+scaler_nwp = load("/home/hjh/WindForecast/data/scaler_nwp.joblib")
+scaler_wind = load("/home/hjh/WindForecast/data/scaler_wind.joblib")
+scaler_power = load("/home/hjh/WindForecast/data/scaler_power.joblib")
 
 # with open("station_config.yaml", "r") as f:
 #     station_conf = yaml.safe_load(f)
-with open("train_scripts/config.yaml", "r") as f:
+with open("/home/hjh/WindForecast/train_scripts/config.yaml", "r") as f:
     config = yaml.safe_load(f)
 pred_step = 16
 
@@ -33,11 +34,11 @@ model_id = "d19a7ba0194e4450b156ee7268e6e708" #3
 model_id = "5e9d8fb2188641e8bf33e975f69541c7" #4
 model_id = "7094cc3657674942964893c62ffa4aa9" #6
 
-logged_model = f'runs:/{model_id}/pred_model'
-model = mlflow.pytorch.load_model(logged_model)
+logged_model = '/home/hjh/WindForecast/train_scripts/mlruns/927062044067789145/99d3df273b7f41d889df08bd30d4fe12/artifacts/pred_model/data/model.pth'
+model = torch.load(logged_model)
 model.to("cpu").eval()
 
-with open("station_config.yaml", "r") as f:
+with open("/home/hjh/WindForecast/station_config.yaml", "r") as f:
     station_cfg = yaml.safe_load(f)
 
 name_mapper = {station_cfg[key]['code_nwp']:key for key in station_cfg.keys()}
@@ -127,7 +128,7 @@ def load_data(start_time, mode="typhoon"):
             data_ = data_[["TIMESTAMP", "id", "power", "power_unit", "power_medfilt_unit"]]
             data_power = pd.concat([data_power, data_])
     elif mode == "typhoon": #直接从data.feather 中读取
-        data = pd.read_feather(os.path.join("data", "data.feather"))
+        data = pd.read_feather(os.path.join("/home/hjh/WindForecast/data", "data.feather"))
         data_nwp_new = data
         data_wind = data
         data_power = data
@@ -157,8 +158,8 @@ def infer(model,
 
 if True:
     mode = "typhoon" #"infer, typhoon"
-    start_time = "2023-07-17 06:00:00" #
-    end_time = "2023-07-19 06:00:00" 
+    start_time = "2023-11-17 06:00:00" #
+    end_time = "2023-11-19 06:00:00"
 else:
     mode = "infer"
     start_time = "2024-07-4 06:00:00" #
@@ -194,6 +195,8 @@ for time_past, time_future in time_areas:
         nwp_labels = []
         preds = []
         station_id = vars["id"]
+        if station_id != pred_station_id:
+            continue
         cap = vars["capacity"]
         
         #合成观测数据
@@ -269,5 +272,5 @@ for time_past, time_future in time_areas:
         df_power = pd.concat([time_future, df_power, power_future['power']], axis=1)
         
         
-        df_wind.to_csv(f"outputs/infer/{station}_wind_{pred_start_str}_{pred_end_str}.csv", index=False)
-        df_power.to_csv(f"outputs/infer/{station}_power_{pred_start_str}_{pred_end_str}.csv", index=False)
+        df_wind.to_csv(f"/home/hjh/WindForecast/outputs/infer/{station}_wind_{pred_start_str}_{pred_end_str}.csv", index=False)
+        df_power.to_csv(f"/home/hjh/WindForecast/outputs/infer/{station}_power_{pred_start_str}_{pred_end_str}.csv", index=False)
