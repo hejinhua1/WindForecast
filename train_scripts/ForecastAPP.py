@@ -26,21 +26,21 @@ data_type_mapper = {
     "风速": "wind",
     "功率": "power"
 }
-scaler_nwp = load("E:\HJHCloud\Seafile\startup\WindForecast\data\scaler_nwp.joblib")
-scaler_wind = load("E:\HJHCloud\Seafile\startup\WindForecast\data\scaler_wind.joblib")
-scaler_power = load("E:\HJHCloud\Seafile\startup\WindForecast\data\scaler_power.joblib")
+# 定义相对路径
+base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-with open(r"E:\HJHCloud\Seafile\startup\WindForecast\train_scripts\config.yaml", "r") as f:
+scaler_nwp = load(os.path.join(base_path, "data", "scaler_nwp.joblib"))
+scaler_wind = load(os.path.join(base_path, "data", "scaler_wind.joblib"))
+scaler_power = load(os.path.join(base_path, "data", "scaler_power.joblib"))
+
+with open(os.path.join(base_path, "train_scripts", "config.yaml"), "r") as f:
     config = yaml.safe_load(f)
-pred_step = 16
 
-logged_model = r'E:\HJHCloud\Seafile\startup\WindForecast\train_scripts\mlruns\927062044067789145\99d3df273b7f41d889df08bd30d4fe12\artifacts/pred_model\data\model.pth'
-logged_model = r'E:\HJHCloud\Seafile\startup\WindForecast\train_scripts\mlruns\120797431678840380\0f7d15a9b3384dd6b3cd5474cd65c8c5\artifacts\pred_model\data\model.pth'
-
+logged_model = os.path.join(base_path, "train_scripts", "mlruns", "927062044067789145", "99d3df273b7f41d889df08bd30d4fe12", "artifacts", "pred_model", "data", "model.pth")
 model = torch.load(logged_model, map_location=torch.device('cpu'))
 model.to("cpu").eval()
 
-with open(r"E:\HJHCloud\Seafile\startup\WindForecast\station_config.yaml", "r", encoding="utf-8") as f:
+with open(os.path.join(base_path, "station_config.yaml"), "r", encoding="utf-8") as f:
     station_cfg = yaml.safe_load(f)
 
 name_mapper = {station_cfg[key]['code_nwp']: key for key in station_cfg.keys()}
@@ -48,8 +48,8 @@ id_mapper = {key: station_cfg[key]['id'] for key in station_cfg.keys()}
 name_mappper_reverse = {var: key for key, var in name_mapper.items() if key is not None}
 
 
-def load_data(start_time):
-    data = pd.read_feather(os.path.join(r"E:\HJHCloud\Seafile\startup\WindForecast\data", "data.feather"))
+def load_data():
+    data = pd.read_feather(os.path.join(base_path, "data", "data.feather"))
     data_nwp_new = data
     data_wind = data
     data_power = data
@@ -82,7 +82,7 @@ def infer(model,
 
 
 def get_pred_real_data(start_time, end_time, pred_station):
-    data_nwp, data_wind, data_power = load_data(start_time=start_time)
+    data_nwp, data_wind, data_power = load_data()
 
     time_areas = []
     for time_ in pd.date_range(start=start_time, end=end_time, freq='1D'):
@@ -162,6 +162,7 @@ def get_pred_real_data(start_time, end_time, pred_station):
             # 场站数据
             id_tensor = torch.tensor([station_id]).long()
             pred_times = 1
+            pred_step = 16
             preds = infer(model, history_tensor, future_tensor, id_tensor, pred_step, config["pred_len"] * pred_times)
 
             # preds_label = scaler_wind.inverse_transform(preds[:, -1:]).reshape(-1)
