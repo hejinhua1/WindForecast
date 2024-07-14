@@ -5,6 +5,6 @@
 
 服务器上运行时，需要进行端口映射，例如需要在本地终端输入：
 
-```bash ssh -L 8000:localhost:5000 username@remote_host```
+```ssh -L 8000:localhost:5000 username@remote_host```
 
 然后在浏览器中输入 http://localhost:8000/ 即可查看记录。

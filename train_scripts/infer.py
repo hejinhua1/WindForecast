@@ -16,7 +16,7 @@ warnings.filterwarnings("ignore")
 data_storage_dir = "data_storage"
 model_name = "wind-speed-pred"
 model_version = "186"
-pred_station_id = 0
+pred_station_id = 4
 
 scaler_nwp = load("/home/hjh/WindForecast/data/scaler_nwp.joblib")
 scaler_wind = load("/home/hjh/WindForecast/data/scaler_wind.joblib")
@@ -35,6 +35,7 @@ model_id = "5e9d8fb2188641e8bf33e975f69541c7" #4
 model_id = "7094cc3657674942964893c62ffa4aa9" #6
 
 logged_model = '/home/hjh/WindForecast/train_scripts/mlruns/927062044067789145/99d3df273b7f41d889df08bd30d4fe12/artifacts/pred_model/data/model.pth'
+logged_model = '/home/hjh/WindForecast/train_scripts/mlruns/120797431678840380/0f7d15a9b3384dd6b3cd5474cd65c8c5/artifacts/pred_model/data/model.pth'
 model = torch.load(logged_model)
 model.to("cpu").eval()
 
@@ -158,8 +159,8 @@ def infer(model,
 
 if True:
     mode = "typhoon" #"infer, typhoon"
-    start_time = "2023-11-17 06:00:00" #
-    end_time = "2023-11-19 06:00:00"
+    start_time = "2023-7-17 06:00:00" #
+    end_time = "2023-7-19 06:00:00"
 else:
     mode = "infer"
     start_time = "2024-07-4 06:00:00" #

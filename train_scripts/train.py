@@ -25,7 +25,7 @@ with open("/home/hjh/WindForecast/train_scripts/config.yaml", "r") as f:
 with open("/home/hjh/WindForecast/station_config.yaml", "r") as f:
     station_config = yaml.safe_load(f)
 
-train_station_id = 0
+train_station_id = 4
 
 # 提取id到场站的映射
 id_station_mapping = {}

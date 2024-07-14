@@ -15,14 +15,17 @@ warnings.filterwarnings("ignore")
 data_storage_dir = "data_storage"
 model_name = "wind-speed-pred"
 model_version = "186"
+pred_station_id = 0
+pred_station_id = 4
 
-scaler_nwp = load("data/scaler_nwp.joblib")
-scaler_wind = load("data/scaler_wind.joblib")
-scaler_power = load("data/scaler_power.joblib")
+
+scaler_nwp = load("/home/hjh/WindForecast/data/scaler_nwp.joblib")
+scaler_wind = load("/home/hjh/WindForecast/data/scaler_wind.joblib")
+scaler_power = load("/home/hjh/WindForecast/data/scaler_power.joblib")
 
 # with open("station_config.yaml", "r") as f:
 #     station_conf = yaml.safe_load(f)
-with open("train_scripts/config.yaml", "r") as f:
+with open("/home/hjh/WindForecast/train_scripts/config.yaml", "r") as f:
     config = yaml.safe_load(f)
 pred_step = 16
 
@@ -32,8 +35,9 @@ model_id = "5e9d8fb2188641e8bf33e975f69541c7" #4
 model_id = "4b9f51a2ccec49b3938cffb076932d95" #5
 model_id = "7094cc3657674942964893c62ffa4aa9" #6
 
-logged_model = f'runs:/{model_id}/pred_model'
-model = mlflow.pytorch.load_model(logged_model)
+logged_model = '/home/hjh/WindForecast/train_scripts/mlruns/927062044067789145/99d3df273b7f41d889df08bd30d4fe12/artifacts/pred_model/data/model.pth'
+logged_model = '/home/hjh/WindForecast/train_scripts/mlruns/120797431678840380/0f7d15a9b3384dd6b3cd5474cd65c8c5/artifacts/pred_model/data/model.pth'
+model = torch.load(logged_model)
 model.to("cpu").eval()
     
 
@@ -59,7 +63,7 @@ def infer(model,
     return np.concatenate(pred_res, axis=1).reshape(-1, config["label_size"])
 
 
-with open("station_config.yaml", "r") as f:
+with open("/home/hjh/WindForecast/station_config.yaml", "r") as f:
     station_cfg = yaml.safe_load(f)
     
 for station, vars in station_cfg.items():
@@ -68,6 +72,8 @@ for station, vars in station_cfg.items():
     nwp_labels = []
     preds = []
     station_id = vars["id"]
+    if station_id != pred_station_id:
+        continue
     cap = vars["capacity"]
     
     data_ = CustomDataset(mode="test", step=96, id=station_id)
@@ -118,4 +124,4 @@ for station, vars in station_cfg.items():
 
     df = pd.DataFrame(data_dict)
     power_mape = np.mean(np.abs(df['power_label']-df['power_pred']) / cap)
-    df.to_csv("outputs/test/{}_{:.4f}.csv".format(station, power_mape))
+    df.to_csv("/home/hjh/WindForecast/outputs/test/{}_{:.4f}.csv".format(station, power_mape))
