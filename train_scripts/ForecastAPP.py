@@ -14,6 +14,7 @@ from joblib import load
 from glob import glob
 from tqdm import tqdm
 from scipy.signal import medfilt
+from sklearn.metrics import mean_absolute_error, mean_squared_error, mean_absolute_percentage_error
 
 import warnings
 warnings.filterwarnings("ignore")
@@ -199,7 +200,7 @@ def add_one_day(date_str):
 
 
 
-def visualize_data(date, data_type, pred_station):
+def predict_from_date(date, data_type, pred_station):
     # 将字符串转换为 datetime 对象
     date = datetime.strptime(date, "%Y%m%d")
 
@@ -219,6 +220,9 @@ def visualize_data(date, data_type, pred_station):
             legend_title_text="预测 vs 观测"
         )
         fig.for_each_trace(lambda trace: trace.update(name={'wind_record_pred': '预测风速', '10': '实测风速'}[trace.name]))
+        mae = mean_absolute_error(wind_df['wind_record'].values, wind_df['wind_record_pred'].values)
+        rmse = mean_squared_error(wind_df['wind_record'].values, wind_df['wind_record_pred'].values, squared=False)
+        mape = mean_absolute_percentage_error(wind_df['wind_record'].values, wind_df['wind_record_pred'].values)
     elif data_type == "功率":
         fig = px.line(power_df, x='TIMESTAMP', y=['power_pred', 'power'], title=f"{pred_station} 功率")
         fig.update_layout(
@@ -227,10 +231,13 @@ def visualize_data(date, data_type, pred_station):
             legend_title_text="预测 vs 观测"
         )
         fig.for_each_trace(lambda trace: trace.update(name={'power_pred': '预测功率', 'power': '实测功率'}[trace.name]))
+        mae = mean_absolute_error(power_df['power'].values, power_df['power_pred'].values)
+        rmse = mean_squared_error(power_df['power'].values, power_df['power_pred'].values, squared=False)
+        mape = mean_absolute_percentage_error(power_df['power'].values, power_df['power_pred'].values)
     else:
         return "Invalid data type selected."
 
-    return fig
+    return fig, mae, rmse, mape*100
 
 
 def predict_from_csv(csv_file, data_type, station):
@@ -252,6 +259,7 @@ def predict_from_csv(csv_file, data_type, station):
             legend_title_text="预测 vs 观测"
         )
         fig.for_each_trace(lambda trace: trace.update(name={'wind_record_pred': '预测风速', '10': '实测风速'}[trace.name]))
+
     elif data_type == "功率":
         fig = px.line(power_df, x='TIMESTAMP', y=['power_pred', 'power'], title=f"{station} 功率")
         fig.update_layout(
@@ -267,25 +275,30 @@ def predict_from_csv(csv_file, data_type, station):
 
 
 with gr.Blocks() as demo:
-    gr.Markdown("# 风速和功率数据可视化")
-    gr.Markdown(" 选择场站和数据类型进行可视化")
+    gr.Markdown("# 台风条件下海上风电场风速及功率预测系统")
+    gr.Markdown(" 第一个页面实现从数据库中对历史台风期间的的预测，第二个页面实现对未来台风的预测")
 
-    with gr.Tab("从日期选择"):
+    with gr.Tab("从历史数据选择"):
         with gr.Row():
             date = gr.Dropdown(choices=["20230717", "20230718", "20230719"], label="选择日期")
             data_type = gr.Dropdown(choices=["风速", "功率"], label="选择数据类型")
             station = gr.Dropdown(choices=list(station_names), label="选择场站")
-        output = gr.Plot()
+        fig_output = gr.Plot()
         plot = gr.Button("可视化")
-        plot.click(fn=visualize_data, inputs=[date, data_type, station], outputs=output)
+        with gr.Row():
+            MAE_output = gr.Textbox(label="平均绝对误差（MAE）", value="None")
+            RMSE_output = gr.Text(label="均方根误差（RMSE）", value="None")
+            MAPE_output = gr.Text(label="平均绝对百分比误差（MAPE）/%", value="None")
+        plot.click(fn=predict_from_date, inputs=[date, data_type, station], outputs=[fig_output, MAE_output, RMSE_output, MAPE_output])
 
-    with gr.Tab("从CSV文件"):
+
+    with gr.Tab("从CSV文件选择"):
         csv_file = gr.File(label="上传CSV文件")
         with gr.Row():
             data_type = gr.Dropdown(choices=["风速", "功率"], label="选择数据类型")
             station = gr.Dropdown(choices=list(station_names), label="选择场站")
-        output_csv = gr.Plot()
+        fig_output = gr.Plot()
         plot_csv = gr.Button("预测")
-        plot_csv.click(fn=predict_from_csv, inputs=[csv_file, data_type, station], outputs=output_csv)
+        plot_csv.click(fn=predict_from_csv, inputs=[csv_file, data_type, station], outputs=fig_output)
 
 demo.launch()
