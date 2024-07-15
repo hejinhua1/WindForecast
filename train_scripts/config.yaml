@@ -1,5 +1,5 @@
 obs_len: 192
 pred_len: 96
-patience: 7
+patience: 1
 feats_size: 16
 label_size: 8

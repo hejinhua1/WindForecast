@@ -25,7 +25,7 @@ with open("/home/hjh/WindForecast/train_scripts/config.yaml", "r") as f:
 with open("/home/hjh/WindForecast/station_config.yaml", "r") as f:
     station_config = yaml.safe_load(f)
 
-train_station_id = 4
+train_station_id = 17
 
 # 提取id到场站的映射
 id_station_mapping = {}
@@ -33,7 +33,7 @@ for station, attributes in station_config.items():
     id_station_mapping[attributes['id']] = station
 
 pred_step = 16
-EPOCH_NUM = 50
+EPOCH_NUM = 25
 
 # 生成task_name
 station_name = id_station_mapping[train_station_id]
@@ -45,7 +45,8 @@ mlflow.set_experiment(task_name)
 
 train_set = CustomDataset(mode="train", id=train_station_id)
 val_set = CustomDataset(mode="val", id=train_station_id)
-
+# Specify which GPU to use, e.g., GPU 1
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 #超参设置的地方
