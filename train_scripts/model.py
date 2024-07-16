@@ -3,6 +3,7 @@ from torch import nn
 import torch.nn.functional as F
 import math
 
+
 class TemporalPatternAttention(nn.Module):
 
     def __init__(self, filter_size, filter_num, attn_len, attn_size):
@@ -35,6 +36,7 @@ class TemporalPatternAttention(nn.Module):
         new_ht = self.linear2(concat)
         return new_ht
 
+
 class TPALSTM(nn.Module):
 
     def __init__(self, input_size, output_size, hidden_size, obs_len, pred_len, n_layers):
@@ -43,7 +45,7 @@ class TPALSTM(nn.Module):
         self.embed_id = nn.Embedding(26, hidden_size)
         self.relu = nn.ReLU()
         self.lstm = nn.LSTM(hidden_size, hidden_size, n_layers, \
-                            bias=True, batch_first=True)  # output (batch_size, obs_len, hidden_size)
+                            bias=True, batch_first=True, dropout=0.5)  # output (batch_size, obs_len, hidden_size)
         self.hidden_size = hidden_size
         self.filter_num = 32
         self.filter_size = 1
@@ -54,19 +56,19 @@ class TPALSTM(nn.Module):
         self.n_layers = n_layers
 
     def forward(self, x, station_id=None):
-        batch_size, obs_len, num_features = x.size()
-        xconcat = self.relu(self.hidden(x))
+        batch_size, obs_len, num_features = x.size()  # [1, 208, 16]
+        xconcat = self.relu(self.hidden(x))  # [1, 208, 56]
         if station_id is not None:
             station_id = station_id.view(-1, 1).type_as(x).long()
             xconcat = xconcat + self.embed_id(station_id)
-        H = torch.zeros(batch_size, obs_len - 1, self.hidden_size).type_as(x)
-        ht = torch.zeros(self.n_layers, batch_size, self.hidden_size).type_as(x)
+        H = torch.zeros(batch_size, obs_len - 1, self.hidden_size).type_as(x)  # [1, 207, 56]
+        ht = torch.zeros(self.n_layers, batch_size, self.hidden_size).type_as(x)  # [4, 1, 56]
         ct = ht.clone()
         for t in range(obs_len):
             xt = xconcat[:, t, :].view(batch_size, 1, -1)
             out, (ht, ct) = self.lstm(xt, (ht, ct))
-            htt = ht.permute(1, 0, 2)
-            htt = htt[:, -1, :]
+            htt = ht.permute(1, 0, 2)  # [1, 4, 56]
+            htt = htt[:, -1, :]  # 仅保留最后一个layer ？
             if t != obs_len - 1:
                 H[:, t, :] = htt
         H = self.relu(H)
@@ -77,7 +79,6 @@ class TPALSTM(nn.Module):
         ypred = self.linear(new_ht)
         ypred = ypred[:, -self.pred_slice:]
         return ypred
-
 
 
 class TemporalPatternAttention_RES(nn.Module):
@@ -91,7 +92,6 @@ class TemporalPatternAttention_RES(nn.Module):
         self.conv1 = nn.Conv2d(1, filter_num, (3, 3), padding='same')
         self.BN = nn.BatchNorm2d(filter_num)
         self.conv2 = nn.Conv2d(filter_num, 1, (3, 3), padding='same')
-
 
         self.conv3 = nn.Conv2d(1, filter_num, (attn_len, filter_size))
         self.linear1 = nn.Linear(attn_size, filter_num)
@@ -125,6 +125,7 @@ class TemporalPatternAttention_RES(nn.Module):
         new_ht = self.linear2(concat)
         return new_ht
 
+
 class TPALSTM_RES(nn.Module):
 
     def __init__(self, input_size, output_horizon, hidden_size, obs_len, n_layers):
@@ -138,7 +139,7 @@ class TPALSTM_RES(nn.Module):
         self.filter_size = 1
         self.output_horizon = output_horizon
         self.attention = TemporalPatternAttention_RES(self.filter_size, \
-                                                  self.filter_num, obs_len - 1, hidden_size)
+                                                      self.filter_num, obs_len - 1, hidden_size)
         self.linear = nn.Linear(hidden_size, output_horizon)
         self.n_layers = n_layers
 
@@ -162,10 +163,6 @@ class TPALSTM_RES(nn.Module):
         new_ht = self.attention(H, htt)
         ypred = self.linear(new_ht)
         return ypred
-
-
-
-
 
 
 class TemporalPatternAttention_TA(nn.Module):
@@ -199,6 +196,7 @@ class TemporalPatternAttention_TA(nn.Module):
         concat = torch.cat([ht, v], dim=1)
         return concat
 
+
 class TPALSTM_TA(nn.Module):
 
     def __init__(self, input_size, output_horizon, hidden_size, obs_len, n_layers):
@@ -212,7 +210,7 @@ class TPALSTM_TA(nn.Module):
         self.filter_size = 1
         self.output_horizon = output_horizon
         self.attention = TemporalPatternAttention_TA(self.filter_size, \
-                                                  self.filter_num, obs_len - 1, hidden_size)
+                                                     self.filter_num, obs_len - 1, hidden_size)
         self.linear = nn.Linear(self.filter_num + hidden_size + input_size, output_horizon)
         self.n_layers = n_layers
 
@@ -239,26 +237,22 @@ class TPALSTM_TA(nn.Module):
         H = H.view(-1, 1, obs_len - 1, self.hidden_size)
         concat = self.attention(H, htt)
 
-
         # add typhoon attention
         e_ti = torch.zeros(batch_size, x.shape[1], 1)
         for i in range(x.shape[1]):
-            temp = torch.tanh(self.TA_linear1(torch.cat([concat, x[:,i,:]], dim=1)))
-            e_ti[:,i,:] = self.TA_linear2(temp)
+            temp = torch.tanh(self.TA_linear1(torch.cat([concat, x[:, i, :]], dim=1)))
+            e_ti[:, i, :] = self.TA_linear2(temp)
         beta_ti = self.softmax(e_ti.squeeze())
 
         ct = torch.zeros(batch_size, x.shape[2])
         for i in range(x.shape[1]):
-            xi = x[:,i,:]
-            beta_i = beta_ti[:,i].unsqueeze(1)
-            ct = ct + torch.mul(xi,beta_i)
+            xi = x[:, i, :]
+            beta_i = beta_ti[:, i].unsqueeze(1)
+            ct = ct + torch.mul(xi, beta_i)
 
-        ypred = self.linear(torch.cat([concat,ct],dim=1))
+        ypred = self.linear(torch.cat([concat, ct], dim=1))
 
         return ypred
-
-
-
 
 
 class MLP(torch.nn.Module):
@@ -266,20 +260,21 @@ class MLP(torch.nn.Module):
     def __init__(self, input_size, output_horizon, hidden_size, obs_len, n_layers):
         super(MLP, self).__init__()
 
-        self.linear1 = torch.nn.Linear(input_size*obs_len, hidden_size)
+        self.linear1 = torch.nn.Linear(input_size * obs_len, hidden_size)
         self.relu = torch.nn.ReLU()
         self.linear2 = torch.nn.Linear(hidden_size, hidden_size)  # 2个隐层
         self.relu2 = torch.nn.ReLU()
         self.linear3 = torch.nn.Linear(hidden_size, output_horizon)
 
     def forward(self, x):
-        xx = x.view(x.shape[0],-1)
+        xx = x.view(x.shape[0], -1)
         x = self.linear1(xx)
         x = self.relu(x)
         x = self.linear2(x)
         x = self.relu2(x)
         x = self.linear3(x)
         return x
+
 
 class TPALSTM_pre(torch.nn.Module):
 
@@ -299,19 +294,21 @@ class TPALSTM_pre(torch.nn.Module):
         x = self.relu2(x)
         x = self.linear3(x)
         return x
-    
 
-    #TIMES Net
+    # TIMES Net
+
+
 def FFT_for_Period(x, k=2):
     # [B, T, C]
-    xf = torch.fft.rfft(x, dim=1) #在第1个纬度上进行傅里叶变换，也就是在时间序列上进行傅里叶变换
+    xf = torch.fft.rfft(x, dim=1)  # 在第1个纬度上进行傅里叶变换，也就是在时间序列上进行傅里叶变换
     # find period by amplitudes
     frequency_list = abs(xf).mean(0).mean(-1)
-    frequency_list[0] = 0 #we don't care about the constant term ?? TODO 傅里叶变换的常数项是第一项吗
-    _, top_list = torch.topk(frequency_list, k) #选择振幅最大的k个频率的index，振幅越大表示能量越大，对原信号的贡献度也越大
+    frequency_list[0] = 0  # we don't care about the constant term ?? TODO 傅里叶变换的常数项是第一项吗
+    _, top_list = torch.topk(frequency_list, k)  # 选择振幅最大的k个频率的index，振幅越大表示能量越大，对原信号的贡献度也越大
     top_list = top_list.detach().cpu().numpy()
-    period = x.shape[1] // top_list #周期 = 采样点数 / 频率, 其中这个频率不是真实的频率，而是代表了一种不同性
+    period = x.shape[1] // top_list  # 周期 = 采样点数 / 频率, 其中这个频率不是真实的频率，而是代表了一种不同性
     return period, abs(xf).mean(-1)[:, top_list]
+
 
 class TokenEmbedding(nn.Module):
     def __init__(self, c_in, d_model):
@@ -327,6 +324,7 @@ class TokenEmbedding(nn.Module):
     def forward(self, x):
         x = self.tokenConv(x.permute(0, 2, 1)).transpose(1, 2)
         return x
+
 
 class PositionalEmbedding(nn.Module):
     def __init__(self, d_model, max_len=5000):
@@ -348,6 +346,7 @@ class PositionalEmbedding(nn.Module):
     def forward(self, x):
         return self.pe[:, :x.size(1)]
 
+
 class FixedEmbedding(nn.Module):
     def __init__(self, c_in, d_model):
         super(FixedEmbedding, self).__init__()
@@ -367,6 +366,7 @@ class FixedEmbedding(nn.Module):
 
     def forward(self, x):
         return self.emb(x).detach()
+
 
 class TemporalEmbedding(nn.Module):
     def __init__(self, d_model, embed_type='fixed', freq='h'):
@@ -397,6 +397,7 @@ class TemporalEmbedding(nn.Module):
 
         return hour_x + weekday_x + day_x + month_x + minute_x
 
+
 class TimeFeatureEmbedding(nn.Module):
     def __init__(self, d_model, embed_type='timeF', freq='h'):
         super(TimeFeatureEmbedding, self).__init__()
@@ -408,6 +409,7 @@ class TimeFeatureEmbedding(nn.Module):
 
     def forward(self, x):
         return self.embed(x)
+
 
 class DataEmbedding(nn.Module):
     def __init__(self, c_in, d_model, embed_type='fixed', freq='h', dropout=0.1):
@@ -427,6 +429,7 @@ class DataEmbedding(nn.Module):
             x = self.value_embedding(
                 x) + self.temporal_embedding(x_mark) + self.position_embedding(x)
         return self.dropout(x)
+
 
 class Inception_Block_V1(nn.Module):
     def __init__(self, in_channels, out_channels, num_kernels=6, init_weight=True):
@@ -455,6 +458,7 @@ class Inception_Block_V1(nn.Module):
         res = torch.stack(res_list, dim=-1).mean(-1)
         return res
 
+
 class TimesBlock(nn.Module):
     def __init__(self, seq_len, pred_len, d_model, d_ff, num_kernels, top_k):
         super(TimesBlock, self).__init__()
@@ -470,11 +474,11 @@ class TimesBlock(nn.Module):
 
     def forward(self, x):
         B, T, N = x.size()
-        period_list, period_weight = FFT_for_Period(x, self.k) #weight就是幅值，period就是周期
+        period_list, period_weight = FFT_for_Period(x, self.k)  # weight就是幅值，period就是周期
 
         res = []
         for i in range(self.k):
-            period = period_list[i] #周期
+            period = period_list[i]  # 周期
             # padding
             if (self.seq_len + self.pred_len) % period != 0:
                 length = (
@@ -494,7 +498,7 @@ class TimesBlock(nn.Module):
             res.append(out[:, :(self.seq_len + self.pred_len), :])
         res = torch.stack(res, dim=-1)
         # adaptive aggregation
-        period_weight = F.softmax(period_weight, dim=1) #按权重归一化
+        period_weight = F.softmax(period_weight, dim=1)  # 按权重归一化
         period_weight = period_weight.unsqueeze(
             1).unsqueeze(1).repeat(1, T, N, 1)
         res = torch.sum(res * period_weight, -1)
@@ -502,21 +506,23 @@ class TimesBlock(nn.Module):
         res = res + x
         return res
 
+
 class TimesNet(nn.Module):
     """
     Paper link: https://openreview.net/pdf?id=ju_Uqw384Oq
     """
-    def __init__(self, seq_len=24, 
-                 pred_len=24, 
-                 e_layers=2, 
-                 d_model=32, 
-                 d_ff=32, 
-                 num_kernels=6, 
-                 top_k=5, 
+
+    def __init__(self, seq_len=24,
+                 pred_len=24,
+                 e_layers=2,
+                 d_model=32,
+                 d_ff=32,
+                 num_kernels=6,
+                 top_k=5,
                  c_in=13,
                  c_out=3,
-                 dropout=0.1, 
-                 embed='timeF', 
+                 dropout=0.1,
+                 embed='timeF',
                  freq='h'
                  ):
         super(TimesNet, self).__init__()
@@ -560,9 +566,56 @@ class TimesNet(nn.Module):
         #           (means[:, 0, :].unsqueeze(1).repeat(
         #               1, self.pred_len + self.seq_len, 1))
         return dec_out[:, -self.pred_len:, :]
-    
+
+
+class SimpleAttention(nn.Module):
+    def __init__(self, hidden_size):
+        super(SimpleAttention, self).__init__()
+        self.attention = nn.Linear(hidden_size, 1)
+
+    def forward(self, lstm_output):
+        score_ = self.attention(lstm_output)
+        weights_ = F.softmax(score_, dim=1)
+        context_ = torch.sum(lstm_output * weights_, dim=1)
+        return context_
+
+
+class LSTMWithAttention(nn.Module):
+    def __init__(self, input_size, hidden_size, num_layers, output_size, dropout_rate=0.5):
+        super(LSTMWithAttention, self).__init__()
+        self.lstm = nn.LSTM(input_size, hidden_size, num_layers, batch_first=True, dropout=dropout_rate)
+        self.attention = SimpleAttention(hidden_size)
+        self.fc = nn.Linear(hidden_size, output_size)
+
+    def forward(self, x, station_id):
+        lstm_out, (h_n, c_n) = self.lstm(x)
+        context = self.attention(lstm_out)
+        out = self.fc(context)
+        return out
+
+
 if __name__ == '__main__':
-    model = TimesNet()
-    x = torch.randn(1, 24, 13)
-    x_mark = torch.randn(1, 24, 4) #关于时间的特征
-    print(model(x, x_mark).shape)
+    # model = TimesNet()
+    # x = torch.randn(1, 24, 13)
+    # x_mark = torch.randn(1, 24, 4) #关于时间的特征
+    # print(model(x, x_mark).shape)
+
+    # 参数设置
+    input_size = 10  # feature_size
+    hidden_size = 64
+    num_layers = 2
+    output_size = 16
+    dropout_rate = 0.5
+
+    # 创建模型
+    model = LSTMWithAttention(input_size, hidden_size, num_layers, output_size, dropout_rate)
+
+    # 模拟输入数据
+    batch_size = 32
+    seq_len = 208
+    input_data = torch.randn(batch_size, seq_len, input_size)  # [batch, obs_len, feature_size]
+
+    # 前向传播
+    output = model(input_data)
+
+    print("输出的维度:", output.shape)  # [batch, output_size]

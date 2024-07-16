@@ -1,6 +1,6 @@
 import torch 
 import torch.nn.functional as F
-from model import TPALSTM
+from model import TPALSTM, LSTMWithAttention
 from torch.optim import Adam
 import torch.optim.lr_scheduler as lr_scheduler
 from torch.utils.data import DataLoader
@@ -25,8 +25,9 @@ with open("/home/hjh/WindForecast/train_scripts/config.yaml", "r") as f:
 with open("/home/hjh/WindForecast/station_config.yaml", "r") as f:
     station_config = yaml.safe_load(f)
 
-train_station_id = 17
-
+train_station_id = 0
+# Specify which GPU to use, e.g., GPU 1
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 # 提取id到场站的映射
 id_station_mapping = {}
 for station, attributes in station_config.items():
@@ -45,8 +46,7 @@ mlflow.set_experiment(task_name)
 
 train_set = CustomDataset(mode="train", id=train_station_id)
 val_set = CustomDataset(mode="val", id=train_station_id)
-# Specify which GPU to use, e.g., GPU 1
-os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 #超参设置的地方
@@ -167,6 +167,13 @@ def objective(trial):
                         obs_len=config["obs_len"]+pred_step, #设计到拼接的问题,所以这里要加3 
                         pred_len=pred_step, #滚动预测, 预测3个时刻,滚动8次
                         n_layers=n_layers)
+
+        model = LSTMWithAttention(
+            input_size=config['feats size'],
+            output_size=config['label size']*pred_step,
+            hidden_size=hidden_size,
+            num_layers=n_layers
+        )
         model.to(device)
         optimizer = Adam(model.parameters(), lr=lr)
         # scheduler = lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.num_epoches, eta_min=1e-5)

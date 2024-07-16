@@ -11,4 +11,5 @@ data_raw/
 data_infer/
 train_scripts/mlruns/
 train_scripts/outputs.db
+.git/
 

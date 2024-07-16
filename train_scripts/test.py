@@ -17,6 +17,13 @@ model_name = "wind-speed-pred"
 model_version = "186"
 pred_station_id = 0
 pred_station_id = 4
+pred_station_id = 6
+pred_station_id = 9
+pred_station_id = 10
+pred_station_id = 13
+pred_station_id = 15
+# pred_station_id = 17
+
 
 
 scaler_nwp = load("/home/hjh/WindForecast/data/scaler_nwp.joblib")
@@ -37,6 +44,12 @@ model_id = "7094cc3657674942964893c62ffa4aa9" #6
 
 logged_model = '/home/hjh/WindForecast/train_scripts/mlruns/927062044067789145/99d3df273b7f41d889df08bd30d4fe12/artifacts/pred_model/data/model.pth'
 logged_model = '/home/hjh/WindForecast/train_scripts/mlruns/120797431678840380/0f7d15a9b3384dd6b3cd5474cd65c8c5/artifacts/pred_model/data/model.pth'
+logged_model = '/home/hjh/WindForecast/train_scripts/mlruns/170601808424508161/7b4358c4384047eea6a8a5ac1647b74f/artifacts/pred_model/data/model.pth'
+logged_model = '/home/hjh/WindForecast/train_scripts/mlruns/273928680616109943/efbbea34ebcd4905ba1deef9337a71ba/artifacts/pred_model/data/model.pth'
+logged_model = '/home/hjh/WindForecast/train_scripts/mlruns/623869325966866179/3aaa36b0c362441ead0a3643613f5bd6/artifacts/pred_model/data/model.pth'
+logged_model = '/home/hjh/WindForecast/train_scripts/mlruns/660638748425641786/c2ea020273f54696882dc729d15270f1/artifacts/pred_model/data/model.pth'
+logged_model = '/home/hjh/WindForecast/train_scripts/mlruns/592431398603195072/c352c5b7f20b41f1a25fb0864344d168/artifacts/pred_model/data/model.pth'
+# logged_model = '/home/hjh/WindForecast/train_scripts/mlruns/507548294262481632/eeed11db494a40b288f7cb82261fa253/artifacts/pred_model/data/model.pth'
 model = torch.load(logged_model)
 model.to("cpu").eval()
     
